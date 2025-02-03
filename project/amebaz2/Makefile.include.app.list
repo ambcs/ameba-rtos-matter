@@ -49,7 +49,7 @@ SRC_C += ../../../component/common/application/matter/examples/chiptest/example_
 # Libraries
 # -------------------------------------------------------------------
 
-LIBFLAGS += -Wl,--start-group -L../../../component/soc/realtek/8710c/misc/bsp/lib/common/GCC -Wl,--whole-archive -l_main -Wl,--no-whole-archive -lCHIP -Wl,--end-group # --whole-archive forces linker to override weak functions with strong ones
+LIBFLAGS += -L../../../component/soc/realtek/8710c/misc/bsp/lib/common/GCC -l_matter # --whole-archive forces linker to override weak functions with strong ones
 
 # Compile options
 # -------------------------------------------------------------------

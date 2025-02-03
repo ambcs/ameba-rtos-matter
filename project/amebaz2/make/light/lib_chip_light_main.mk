@@ -7,6 +7,7 @@ OS := $(shell uname)
 
 SDKROOTDIR         := $(shell pwd)/../../..
 AMEBAZ2_TOOLDIR     = $(SDKROOTDIR)/component/soc/realtek/8710c/misc/iar_utility
+GCC_LIBDIR          = $(SDKROOTDIR)/component/soc/realtek/8710c/misc/bsp/lib/common/GCC
 CHIPDIR             = $(SDKROOTDIR)/third_party/connectedhomeip
 MATTER_DIR          = $(SDKROOTDIR)/component/common/application/matter
 MATTER_BUILDDIR     = $(MATTER_DIR)/project/amebaz2
@@ -37,7 +38,10 @@ OBJDUMP = $(CROSS_COMPILE)objdump
 # Initialize target name and target object files
 # -------------------------------------------------------------------
 
-all: lib_main
+LIB1 = $(GCC_LIBDIR)/lib_main.a
+LIB2 = $(GCC_LIBDIR)/libCHIP.a
+FINAL_LIB = $(GCC_LIBDIR)/lib_matter.a
+all: lib_main lib_matter
 
 TARGET=lib_main
 OBJ_DIR=$(TARGET)/Debug/obj
@@ -190,7 +194,15 @@ CPPFLAGS += $(CFLAGS)
 .PHONY: lib_main
 lib_main: prerequirement $(SRC_O) $(DRAM_O) $(SRC_OO)
 	$(AR) crv $(BIN_DIR)/$(TARGET).a $(OBJ_CPP_LIST) $(OBJ_LIST) $(VER_O)
-	cp $(BIN_DIR)/$(TARGET).a $(SDKROOTDIR)/component/soc/realtek/8710c/misc/bsp/lib/common/GCC/$(TARGET).a
+	cp $(BIN_DIR)/$(TARGET).a $(GCC_LIBDIR)/$(TARGET).a
+
+.PHONY: lib_matter
+lib_matter: $(LIB1) $(LIB2)
+	$(AR) x $(LIB1)
+	$(AR) x $(LIB2)
+	mv *.o *.oo $(GCC_LIBDIR)
+	$(AR) rcs $(FINAL_LIB) $(GCC_LIBDIR)/*.o $(GCC_LIBDIR)/*.oo
+	rm -f $(GCC_LIBDIR)/*.o $(GCC_LIBDIR)/*.oo
 
 # Manipulate Image
 # -------------------------------------------------------------------
@@ -209,7 +221,6 @@ prerequirement:
 	@rm -f $(TARGET)_version*.o
 	@echo const char $(TARGET)_rev[] = \"$(TARGET)_ver_`git rev-parse HEAD`_`date +%Y/%m/%d-%T`\"\; > $(TARGET)_version.c
 	@$(CC) $(CFLAGS) $(INCLUDES) -c $(VER_C) -o $(VER_O)
-	@echo "===== $(ARM_GCC_TOOLCHAIN)"
 	@if [ ! -d $(ARM_GCC_TOOLCHAIN) ]; then \
 		echo ===========================================================; \
 		echo Toolchain not found, \"make toolchain\" first!; \
@@ -252,3 +263,4 @@ clean:
 	rm -f *.i
 	rm -f *.s
 	rm -f $(VER_C)
+	rm $(FINAL_LIB)
